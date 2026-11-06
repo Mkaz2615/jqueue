@@ -1,0 +1,40 @@
+# Spring wiring for JQueue.
+#
+# Application settings live under `jqueue:` and are documented in
+# config/config.local.yaml, which is imported below. This file only maps those settings
+# onto the framework (ports, shutdown, logging) and should rarely need editing.
+
+spring:
+  application:
+    name: jqueue
+  main:
+    banner-mode: off
+  config:
+    # JQUEUE_CONFIG_PATH points at the settings file; a missing file is not an error, it
+    # means "run on defaults plus environment", which is what a container usually wants.
+    import: optional:file:${JQUEUE_CONFIG_PATH:./config/config.local.yaml}
+  lifecycle:
+    # Upper bound per shutdown phase. The worker pool bounds its own drain time
+    # (jqueue.worker.shutdown_timeout), so this only caps the HTTP drain.
+    timeout-per-shutdown-phase: ${jqueue.server.shutdown-timeout:20s}
+
+server:
+  # The primary connector is the public job API. The private connector (metrics, health,
+  # dashboard) is added in HttpServerConfiguration.
+  port: ${jqueue.server.public-port:8080}
+  # Stop accepting new requests and let in-flight ones finish before the worker pool drains.
+  shutdown: graceful
+  tomcat:
+    connection-timeout: ${jqueue.server.read-timeout:15s}
+  error:
+    whitelabel:
+      enabled: false
+
+logging:
+  level:
+    root: ${JQUEUE_LOG_LEVEL:${jqueue.logger.level:info}}
+  structured:
+    format:
+      # One JSON object per line, with the logging-context fields (request_id, job_id,
+      # worker_id, ...) and the per-call key/value pairs as top-level keys.
+      console: logstash

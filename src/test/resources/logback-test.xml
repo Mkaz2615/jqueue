@@ -1,0 +1,9 @@
+<configuration>
+  <!-- Keep test output readable: only warnings and errors from the code under test. -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><pattern>%d{HH:mm:ss.SSS} %-5level %logger{20} - %msg %kvp%n</pattern></encoder>
+  </appender>
+  <root level="WARN"><appender-ref ref="CONSOLE"/></root>
+  <!-- Several tests deliberately trigger failures; their error logs are expected noise. -->
+  <logger name="com.jqueue" level="OFF"/>
+</configuration>
